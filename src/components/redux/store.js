@@ -1,102 +1,37 @@
+import { configureStore } from '@reduxjs/toolkit';
 import {
-  createSlice,
-  configureStore,
-  createAsyncThunk,
-} from '@reduxjs/toolkit';
-import axios from 'axios';
+  persistStore,
+  persistReducer,
+  FLUSH,
+  REHYDRATE,
+  PAUSE,
+  PERSIST,
+  PURGE,
+  REGISTER,
+} from 'redux-persist';
+import storage from 'redux-persist/lib/storage';
+import { tasksReducer } from './tasks/slice';
+import { authReducer } from './auth/slice';
 
-const API_BASE_URL = 'https://64b8205821b9aa6eb0799603.mockapi.io/contacts';
+// Persisting token field from auth slice to localstorage
+const authPersistConfig = {
+  key: 'auth',
+  storage,
+  whitelist: ['token'],
+};
 
-const contactsAPI = axios.create({
-  baseURL: API_BASE_URL,
-});
-
-export const fetchContacts = createAsyncThunk(
-  'contacts/fetchContacts',
-  async () => {
-    const response = await contactsAPI.get('/contacts');
-    return response.data;
-  }
-);
-
-export const addContact = createAsyncThunk(
-  'contacts/addContact',
-  async contact => {
-    const response = await contactsAPI.post('/contacts', contact);
-    return response.data;
-  }
-);
-
-export const deleteContact = createAsyncThunk(
-  'contacts/deleteContact',
-  async contactId => {
-    await contactsAPI.delete(`/contacts/${contactId}`);
-    return contactId;
-  }
-);
-
-export const setFilter = createAsyncThunk(
-  'contacts/setFilter',
-  async filter => {
-    const response = await contactsAPI.get('/contacts');
-    const filteredContacts = response.data.filter(contact =>
-      contact.name.toLowerCase().includes(filter.toLowerCase())
-    );
-    return filteredContacts;
-  }
-);
-
-const contactsSlice = createSlice({
-  name: 'contacts',
-  initialState: {
-    items: [],
-    loading: false,
-    error: null,
-    filter: '',
-  },
-  reducers: {},
-  extraReducers: builder => {
-    builder
-      .addCase(fetchContacts.pending, state => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchContacts.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload;
-      })
-      .addCase(fetchContacts.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message;
-      })
-      .addCase(addContact.fulfilled, (state, action) => {
-        state.items.push(action.payload);
-      })
-      .addCase(deleteContact.fulfilled, (state, action) => {
-        state.items = state.items.filter(
-          contact => contact.id !== action.payload
-        );
-      })
-      .addCase(setFilter.pending, state => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(setFilter.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload;
-        state.filter = action.meta.arg;
-      })
-      .addCase(setFilter.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message;
-      });
-  },
-});
-
-const store = configureStore({
+export const store = configureStore({
   reducer: {
-    contacts: contactsSlice.reducer,
+    auth: persistReducer(authPersistConfig, authReducer),
+    tasks: tasksReducer,
   },
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+      },
+    }),
+  devTools: process.env.NODE_ENV === 'development',
 });
 
-export default store;
+export const persistor = persistStore(store);

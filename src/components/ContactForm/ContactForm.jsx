@@ -1,44 +1,55 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { addContact } from 'redux/store';
+import { saveContact } from '../../redux/contacts/operations';
 import styles from './ContactForm.module.css';
 
 export const ContactForm = () => {
+  const dispatch = useDispatch();
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
-  const dispatch = useDispatch();
 
   const handleSubmit = event => {
     event.preventDefault();
-    dispatch(addContact({ name, number }));
+
+    if (name.trim() === '' || number.trim() === '') {
+      return;
+    }
+
+    dispatch(saveContact({ name, number }));
+
     setName('');
     setNumber('');
   };
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
-      <label className={styles.label}>
-        Imię:
+    <div className={styles.container}>
+      <form className={styles.form} onSubmit={handleSubmit}>
         <input
-          className={styles.input}
           type="text"
+          placeholder="Name"
           value={name}
-          onChange={event => setName(event.target.value)}
-        />
-      </label>
-      <label className={styles.label}>
-        Numer telefonu:
-        <input
+          name="name"
+          pattern="^^[A-Za-z.'\- ]+$"
+          title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
+          required
+          onChange={e => setName(e.target.value)}
           className={styles.input}
-          type="text"
-          value={number}
-          onChange={event => setNumber(event.target.value)}
         />
-      </label>
-      <button className={styles.button} type="submit">
-        Dodaj kontakt
-      </button>
-    </form>
+        <input
+          type="text"
+          placeholder="Phone Number"
+          value={number}
+          pattern="^\+?\d{1,4}?\s?\(?\d{1,4}?\)?\s?\d{1,4}\s?\d{1,4}\s?\d{1,9}$"
+          title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
+          required
+          onChange={e => setNumber(e.target.value)}
+          className={styles.input}
+        />
+        <button className={styles.addContactBtn} type="submit">
+          Add Contact
+        </button>
+      </form>
+    </div>
   );
 };
 

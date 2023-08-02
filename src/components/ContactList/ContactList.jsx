@@ -1,35 +1,48 @@
-import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { deleteContact } from 'redux/auth/operations';
+import React, { useEffect } from 'react';
+
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchContacts, deleteContact } from '../../redux/contacts/operations';
 import styles from './ContactList.module.css';
 
-const ContactList = () => {
-  const contacts = useSelector(state => state.contacts.items);
+export const ContactList = () => {
   const dispatch = useDispatch();
+  const contacts = useSelector(state => state.contacts.contacts);
+  const filter = useSelector(state => state.contacts.filter);
 
-  const handleDeleteContact = async contactId => {
-    try {
-      await dispatch(deleteContact(contactId));
-    } catch (error) {
-      console.log(error);
-    }
+  useEffect(() => {
+    const fetchContactsFromBackend = async () => {
+      dispatch(fetchContacts()); // Pobieranie kontaktów z backendu przy montowaniu komponentu
+    };
+
+    fetchContactsFromBackend(); // Pobieranie kontaktów z backendu przy montowaniu komponentu
+  }, [dispatch]);
+
+  //filtrowanie kontaktów na podstawie wartości filtra
+  const filteredContacts = contacts.filter(contact =>
+    contact.name.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  const handleDelete = contactId => {
+    dispatch(deleteContact(contactId));
   };
 
   return (
-    <ul className={styles.list}>
-      {contacts.map(contact => (
-        <li key={contact.id} className={styles.item}>
-          <span>{contact.name}:</span> {contact.number}
-          <button
-            type="button"
-            className={styles.button}
-            onClick={() => handleDeleteContact(contact.id)}
-          >
-            Usuń
-          </button>
-        </li>
-      ))}
-    </ul>
+    <div className={styles.container}>
+      <ul className={styles.contactList}>
+        {filteredContacts.map(contact => (
+          <li key={contact.id} className={styles.contactItem}>
+            <span className={styles.contactName}>{contact.name}</span>
+            <span className={styles.contactNumber}>{contact.number}</span>
+            <button
+              className={styles.deleteBtn}
+              onClick={() => handleDelete(contact.id)}
+            >
+              Delete
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 };
 

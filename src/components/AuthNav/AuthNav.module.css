@@ -1,11 +1,10 @@
-.link {
-  display: inline-block;
-  text-decoration: none;
-  padding: 12px;
-  font-weight: 700;
-  color: #2a363b;
+.container {
+  display: flex;
+  gap: 16px;
 }
 
-.link.active {
-  color: #e84a5f;
+.link {
+  color: #007bff;
+  text-decoration: none;
+  font-size: 16px;
 }
